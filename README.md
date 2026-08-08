@@ -13,20 +13,24 @@ Records a counter event.
 | Header | Required | Description |
 |---|---|---|
 | `key-id` | Yes | A GUID that uniquely identifies the caller/event |
-| `counter-dimensions` | No | Comma-separated dimension pairs: `dim1:val1,dim2:val2` or `dim1=val1,dim2=val2` |
+| `counter-dimensions` | Yes | Comma-separated dimension pairs: `dim1:val1,dim2:val2` or `dim1=val1,dim2=val2` |
+| `counter-value-append` | No | Optional value to add to the counter, default is 1 |
+| `tracked-max` | No | Optional, positive floating point value to keep max of, default is 0.0 |
 
 **Response:** `200 OK` with JSON body:
 ```json
-{ "counterName": "myCounter", "keyId": "<guid>", "dimensions": { "region": "us-east-1", "env": "prod" } }
+{ "counterName": "myCounter", "keyId": "<guid>", "dimensions": { "region": "us-east-1", "env": "prod" }, "count": 3 }
 ```
 
 ### GET `/api/counter/{counter-name}`
 
 Returns the total count of recorded events for the counter.
 
+An optional `key-id` header limits the result to that caller across all dimensions.
+
 **Response:** `200 OK` with JSON body:
 ```json
-{ "counterName": "myCounter", "count": 42 }
+{ "counterName": "myCounter", "value": 12345145, "count": 42, "trackedMax": 65.3 }
 ```
 
 ## Prerequisites
@@ -59,8 +63,9 @@ Returns the total count of recorded events for the counter.
    ```bash
    # POST a counter event
    curl -X POST http://localhost:7071/api/counter/myCounter \
-        -H "key-id: $(uuidgen)" \
-        -H "counter-dimensions: region:us-east-1,env:prod"
+        -H "key-id: d14d435f-f690-7aff-e29f-2afbea68dd4e" \
+        -H "counter-dimensions: pipeline:CL-JKJTSTNG1,providerType:otel,mode:enabled,fields:25,samplingBinMax:25,samplingTimeWindowMax:300s" \
+        -H "counter-value-append: 5"
 
    # GET the counter value
    curl http://localhost:7071/api/counter/myCounter
@@ -83,8 +88,14 @@ az login
 # Deploy (creates resource group if it doesn't exist)
 bash deploy/deploy.sh <resource-group> [base-name] [location]
 
+# PowerShell
+.\deploy\deploy.ps1 <resource-group> [base-name] [location]
+
 # Example
-bash deploy/deploy.sh rg-apicounters apicounters eastus
+bash deploy/deploy.sh clvz-apicounters clvzcounters centralus
+
+# PowerShell example
+.\deploy\deploy.ps1 clvz-apicounters clvzcounters centralus
 ```
 
 The deployment script:
@@ -110,7 +121,8 @@ The deployment script:
 │       └── CounterFunctionTests.cs  # Unit tests
 ├── deploy/
 │   ├── main.bicep                   # Azure infrastructure template
-│   └── deploy.sh                    # End-to-end deployment script
+│   ├── deploy.sh                    # Bash deployment script
+│   └── deploy.ps1                   # PowerShell deployment script
 └── ApiCounters.sln
 ```
 
@@ -121,6 +133,7 @@ Counter events are stored in the `counters` Azure Storage Table:
 | Column | Value |
 |---|---|
 | `PartitionKey` | counter name |
-| `RowKey` | key-id (GUID from request header) |
+| `RowKey` | key-id plus MD5 of canonical dimensions: `<guid>_<32-char-hash>` |
 | `Dimensions` | serialized dimensions `dim1:val1,dim2:val2` |
+| `Count` | number of POST calls for this key-id and dimensions combination |
 | `CreatedAt` | UTC timestamp |

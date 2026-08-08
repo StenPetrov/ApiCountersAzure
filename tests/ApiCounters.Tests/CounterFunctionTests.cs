@@ -91,4 +91,37 @@ public class CounterFunctionTests
         var result = CounterFunction.SerializeDimensions(new Dictionary<string, string>());
         Assert.Equal(string.Empty, result);
     }
+
+    [Fact]
+    public void SerializeDimensions_DifferentInputOrder_IsCanonical()
+    {
+        var first = CounterFunction.ParseDimensions("region:us-east-1,env:prod");
+        var second = CounterFunction.ParseDimensions("env:prod,region:us-east-1");
+
+        Assert.Equal(
+            CounterFunction.SerializeDimensions(first),
+            CounterFunction.SerializeDimensions(second));
+    }
+
+    [Fact]
+    public void BuildRowKey_IncludesKeyIdAndExpectedHash()
+    {
+        const string keyId = "8b0d8f64-e1a6-447f-a967-52cdbb2c79e9";
+
+        var rowKey = CounterFunction.BuildRowKey(keyId, "env:prod");
+
+        Assert.StartsWith($"{keyId}_", rowKey);
+        Assert.Matches($"^{keyId}_[0-9a-f]{{32}}$", rowKey);
+    }
+
+    [Fact]
+    public void BuildRowKey_DifferentDimensions_ProducesDifferentRows()
+    {
+        const string keyId = "8b0d8f64-e1a6-447f-a967-52cdbb2c79e9";
+
+        var first = CounterFunction.BuildRowKey(keyId, "env:prod");
+        var second = CounterFunction.BuildRowKey(keyId, "env:test");
+
+        Assert.NotEqual(first, second);
+    }
 }
