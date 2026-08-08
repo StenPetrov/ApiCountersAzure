@@ -4,7 +4,7 @@
 #
 # Prerequisites:
 #   - Azure CLI (az) installed and logged in
-#   - dotnet SDK 8.0+
+#   - dotnet SDK 10.0+
 
 set -euo pipefail
 

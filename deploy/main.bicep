@@ -75,7 +75,7 @@ resource functionApp 'Microsoft.Web/sites@2023-01-01' = {
           value: '1'
         }
       ]
-      netFrameworkVersion: 'v8.0'
+      netFrameworkVersion: 'v10.0'
     }
     httpsOnly: true
   }

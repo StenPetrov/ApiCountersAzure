@@ -31,7 +31,7 @@ Returns the total count of recorded events for the counter.
 
 ## Prerequisites
 
-- [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
+- [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
 - [Azure Functions Core Tools v4](https://learn.microsoft.com/en-us/azure/azure-functions/functions-run-local) (for local development)
 - [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli) (for deployment)
 - [Azurite](https://learn.microsoft.com/en-us/azure/storage/common/storage-use-azurite) or Azure Storage Account (for local testing)
